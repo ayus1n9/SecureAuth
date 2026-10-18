@@ -14,7 +14,8 @@
     "prisma:push": "prisma db push",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "seed": "tsx src/database/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
