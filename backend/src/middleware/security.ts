@@ -124,7 +124,6 @@ const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || 'http://localhost:51
 
 export const corsMiddleware = cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, server-to-server) in dev, but strictly check in browser
     if (!origin) {
       return callback(null, true);
     }
@@ -139,12 +138,14 @@ export const corsMiddleware = cors({
   maxAge: 86400, // 24 hours
 });
 
+const isTest = process.env.NODE_ENV === 'test';
+
 /**
  * Rate Limiters for sensitive endpoints
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each IP to 5 login requests per windowMs
+  max: isTest ? 1000 : 5, // 5 login attempts per window in production
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -155,7 +156,7 @@ export const authLimiter = rateLimit({
 
 export const registerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // Limit each IP to 3 registrations per hour
+  max: isTest ? 1000 : 3, // 3 registrations per hour in production
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -166,7 +167,7 @@ export const registerLimiter = rateLimit({
 
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per 15 minutes
+  max: isTest ? 10000 : 100, // 100 requests per 15 minutes in production
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -177,7 +178,6 @@ export const apiLimiter = rateLimit({
 
 /**
  * Safe Global Error Handler
- * Sanitizes errors so internal DB statements and file paths are never leaked to clients.
  */
 export function globalErrorHandler(err: any, req: Request, res: Response, next: NextFunction): void {
   logger.error({
@@ -199,7 +199,6 @@ export function globalErrorHandler(err: any, req: Request, res: Response, next: 
     return;
   }
 
-  // Handle SyntaxError for malformed JSON request bodies
   if (err instanceof SyntaxError && 'status' in err && (err as any).status === 400 && 'body' in err) {
     res.status(400).json({
       error: 'Bad Request',

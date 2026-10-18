@@ -98,7 +98,7 @@ recordsRouter.post('/', requirePermission('records:create:self'), async (req: Re
 recordsRouter.get('/:id', requirePermission('records:read:self'), async (req: Request, res: Response): Promise<void> => {
   const paramResult = uuidParamSchema.safeParse(req.params);
   if (!paramResult.success) {
-    res.status(400).json({ error: 'Validation Error', message: 'Invalid record ID format' });
+    res.status(400).json({ error: 'Validation Error', message: 'Invalid record ID format: must be a valid UUID' });
     return;
   }
 
@@ -131,7 +131,7 @@ recordsRouter.get('/:id', requirePermission('records:read:self'), async (req: Re
 recordsRouter.put('/:id', requirePermission('records:update:self'), async (req: Request, res: Response): Promise<void> => {
   const paramResult = uuidParamSchema.safeParse(req.params);
   if (!paramResult.success) {
-    res.status(400).json({ error: 'Validation Error', message: 'Invalid record ID format' });
+    res.status(400).json({ error: 'Validation Error', message: 'Invalid record ID format: must be a valid UUID' });
     return;
   }
 
@@ -186,7 +186,7 @@ recordsRouter.put('/:id', requirePermission('records:update:self'), async (req: 
 recordsRouter.delete('/:id', requirePermission('records:delete:self'), async (req: Request, res: Response): Promise<void> => {
   const paramResult = uuidParamSchema.safeParse(req.params);
   if (!paramResult.success) {
-    res.status(400).json({ error: 'Validation Error', message: 'Invalid record ID format' });
+    res.status(400).json({ error: 'Validation Error', message: 'Invalid record ID format: must be a valid UUID' });
     return;
   }
 
