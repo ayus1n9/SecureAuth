@@ -1,0 +1,49 @@
+# Node dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+.next/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Prisma generated & SQLite local dev/test files
+*.db
+*.db-journal
+backend/prisma/*.db
+
+# IDE and OS files
+.DS_Store
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Test and coverage artifacts
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Reports (keep .gitkeep in reports/)
+reports/*
+!reports/.gitkeep
+!reports/zap-baseline-report.json
+!reports/zap-baseline-report.html
+!reports/zap-hardened-report.json
+!reports/zap-hardened-report.html
+!reports/zap-comparison.md

@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  SUPPORT
+  ADMIN
+}
+
+model User {
+  id                  String     @id @default(uuid())
+  email               String     @unique
+  passwordHash        String
+  role                Role       @default(USER)
+  fullName            String
+  failedLoginAttempts Int        @default(0)
+  lockoutUntil        DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  sessions            Session[]
+  records             Record[]
+
+  @@index([email])
+}
+
+model Session {
+  id           String    @id
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime  @default(now())
+  lastActiveAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model Record {
+  id             String    @id @default(uuid())
+  title          String
+  content        String
+  classification String    @default("CONFIDENTIAL")
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model AuditEvent {
+  id        String   @id @default(uuid())
+  eventType String
+  actorId   String?
+  targetId  String?
+  ipAddress String?
+  userAgent String?
+  details   Json?
+  timestamp DateTime @default(now())
+
+  @@index([eventType])
+  @@index([actorId])
+  @@index([timestamp])
+}
