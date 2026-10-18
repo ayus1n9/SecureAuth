@@ -1,0 +1,125 @@
+name: SecureAuth AppSec CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-lint:
+    name: Lint, Typecheck & Automated Security Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: secureauth
+          POSTGRES_PASSWORD: secureauth_test_password
+          POSTGRES_DB: secureauth_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package.json
+            frontend/package.json
+
+      - name: Install Backend Dependencies
+        run: |
+          cd backend
+          npm ci --ignore-scripts=false
+
+      - name: Run Database Migrations
+        env:
+          DATABASE_URL: "postgresql://secureauth:secureauth_test_password@localhost:5432/secureauth_db?schema=public"
+        run: |
+          cd backend
+          npx prisma db push
+
+      - name: Run Backend Typecheck
+        run: |
+          cd backend
+          npm run typecheck
+
+      - name: Run Automated Security Test Suites
+        env:
+          NODE_ENV: test
+          DATABASE_URL: "postgresql://secureauth:secureauth_test_password@localhost:5432/secureauth_db?schema=public"
+          SESSION_SECRET: "ci_test_session_secret_32_bytes_long_secure_entropy"
+          CSRF_SECRET: "ci_test_csrf_secret_32_bytes_long_secure_entropy"
+        run: |
+          cd backend
+          npm test
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci --ignore-scripts=false
+
+      - name: Build Frontend SPA
+        run: |
+          cd frontend
+          npm run build
+
+  sast-and-secrets:
+    name: SAST & Secret Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@e36e4f3eb5e5eb56e8d2e5bf7e0c46b5a1900298 # v2.3.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Semgrep SAST
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" returntocorp/semgrep semgrep \
+            --config=p/owasp-top-ten \
+            --config=p/r2c-security-audit \
+            --error \
+            --exclude=tests \
+            --exclude=security/fixtures
+
+  container-scan:
+    name: Container Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Build Backend Docker Image
+        run: |
+          docker build -t secureauth-backend:test ./backend
+
+      - name: Scan Backend Container with Trivy
+        uses: aquasecurity/trivy-action@18f2510ee396bbf400402947b394f2dd8c87dbb0 # v0.29.0
+        with:
+          image-ref: 'secureauth-backend:test'
+          format: 'table'
+          exit-code: '0'
+          severity: 'CRITICAL,HIGH'
