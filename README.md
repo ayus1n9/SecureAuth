@@ -1,6 +1,6 @@
 # SecureAuth — Secure Full-Stack Application Security Lab
 
-[![Security CI](https://github.com/secureauth-appsec/secureauth/actions/workflows/security-ci.yaml/badge.svg)](https://github.com/secureauth-appsec/secureauth/actions)
+[![Security CI](https://github.com/ayus1n9/SecureAuth/actions/workflows/security-ci.yaml/badge.svg)](https://github.com/ayus1n9/SecureAuth/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-emerald.svg)](LICENSE)
 [![OWASP Top 10](https://img.shields.io/badge/OWASP%20Top%2010-2025%20Mitigated-blue.svg)](docs/owasp-top10-mapping.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue?logo=typescript)](https://www.typescriptlang.org/)
@@ -127,8 +127,8 @@ if (!record) {
 ### Quick Start (Local Docker Compose)
 ```bash
 # Clone the repository
-git clone https://github.com/secureauth-appsec/secureauth.git
-cd secureauth
+git clone https://github.com/ayus1n9/SecureAuth.git
+cd SecureAuth
 
 # Start PostgreSQL, Backend, and Frontend in background
 docker compose up -d --build
